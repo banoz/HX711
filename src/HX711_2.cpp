@@ -48,9 +48,9 @@ uint16_t shiftInSlow(uint8_t dataPin, uint8_t dataPin2, uint8_t clockPin, uint8_
   for (i = 0; i < 8; ++i)
   {
     doubleWrite(clockPin, clockPin2, HIGH);
-    delayMicroseconds(1);
+    delayMicroseconds(3);
     doubleWrite(clockPin, clockPin2, LOW);
-    delayMicroseconds(1);
+    delayMicroseconds(3);
     if (bitOrder == LSBFIRST)
     {
       value |= digitalRead(dataPin) << i;
@@ -87,12 +87,18 @@ void HX711_2::begin(byte dout, byte dout2, byte pd_sck, byte pd_sck2, byte gain)
   PD_SCK2 = pd_sck2;
   DOUT = dout;
   DOUT2 = dout2;
-
+  #ifdef FAST_CPU
+  pinMode(PD_SCK, OUTPUT_OPEN_DRAIN);
+  if (PD_SCK2 != 255)
+    pinMode(PD_SCK2, OUTPUT_OPEN_DRAIN);
+  #else
   pinMode(PD_SCK, OUTPUT);
   if (PD_SCK2 != 255)
     pinMode(PD_SCK2, OUTPUT);
+  #endif
   pinMode(DOUT, DOUT_MODE);
   pinMode(DOUT2, DOUT_MODE);
+
 
   set_gain(gain);
 }
@@ -184,11 +190,11 @@ void HX711_2::read(long *readValues, unsigned long timeout)
     {
       doubleWrite(PD_SCK, PD_SCK2, HIGH);
 #if FAST_CPU
-      delayMicroseconds(1);
+      delayMicroseconds(3);
 #endif
       doubleWrite(PD_SCK, PD_SCK2, LOW);
 #if FAST_CPU
-      delayMicroseconds(1);
+      delayMicroseconds(3);
 #endif
     }
 
@@ -345,7 +351,7 @@ void HX711_2::read(long *readValues, unsigned long timeout)
   {
     doubleWrite(PD_SCK, PD_SCK2, LOW);
 #if FAST_CPU
-    delayMicroseconds(1);
+    delayMicroseconds(3);
 #endif
     doubleWrite(PD_SCK, PD_SCK2, HIGH);
   }
