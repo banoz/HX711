@@ -66,6 +66,14 @@ uint16_t shiftInSlow(uint8_t dataPin, uint8_t dataPin2, uint8_t clockPin, uint8_
   return value2 << 8 | value;
 }
 
+#ifdef FAST_CPU
+/* When using a fast MCU and single clock to drive multiple amp boards the use of a 
+exteranal pullup is needed hence the outptu should be defined as open drain. */
+#define SCK_MODE OUTPUT_OPEN_DRAIN
+#else
+#define SCK_MODE OUTPUT
+#endif
+
 #if ARCH_ESPRESSIF
 // ESP8266 doesn't read values between 0x20000 and 0x30000 when DOUT is pulled up.
 #define DOUT_MODE INPUT
@@ -87,15 +95,9 @@ void HX711_2::begin(byte dout, byte dout2, byte pd_sck, byte pd_sck2, byte gain)
   PD_SCK2 = pd_sck2;
   DOUT = dout;
   DOUT2 = dout2;
-  #ifdef FAST_CPU
-  pinMode(PD_SCK, OUTPUT_OPEN_DRAIN);
+  pinMode(PD_SCK, SCK_MODE);
   if (PD_SCK2 != 255)
-    pinMode(PD_SCK2, OUTPUT_OPEN_DRAIN);
-  #else
-  pinMode(PD_SCK, OUTPUT);
-  if (PD_SCK2 != 255)
-    pinMode(PD_SCK2, OUTPUT);
-  #endif
+    pinMode(PD_SCK2, SCK_MODE);
   pinMode(DOUT, DOUT_MODE);
   pinMode(DOUT2, DOUT_MODE);
 
