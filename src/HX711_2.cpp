@@ -32,9 +32,9 @@
 #include <util/atomic.h>
 #endif
 
-#ifdef FAST_CPU
+// Defines the delay(us) between setting the HIGH/LOW modes of the clock pins
 #define DELAY_MICROSECONDS 3
-#endif
+
 static inline void doubleWrite(uint8_t pin1, uint8_t pin2, bool level)
 {
   digitalWrite(pin1, level);
