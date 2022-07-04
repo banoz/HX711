@@ -32,6 +32,9 @@
 #include <util/atomic.h>
 #endif
 
+#ifdef FAST_CPU
+#define DELAY_MICROSECONDS 3
+#endif
 static inline void doubleWrite(uint8_t pin1, uint8_t pin2, bool level)
 {
   digitalWrite(pin1, level);
@@ -48,9 +51,9 @@ uint16_t shiftInSlow(uint8_t dataPin, uint8_t dataPin2, uint8_t clockPin, uint8_
   for (i = 0; i < 8; ++i)
   {
     doubleWrite(clockPin, clockPin2, HIGH);
-    delayMicroseconds(3);
+    delayMicroseconds(DELAY_MICROSECONDS);
     doubleWrite(clockPin, clockPin2, LOW);
-    delayMicroseconds(3);
+    delayMicroseconds(DELAY_MICROSECONDS);
     if (bitOrder == LSBFIRST)
     {
       value |= digitalRead(dataPin) << i;
@@ -65,14 +68,6 @@ uint16_t shiftInSlow(uint8_t dataPin, uint8_t dataPin2, uint8_t clockPin, uint8_
 
   return value2 << 8 | value;
 }
-
-#ifdef CLOCK_OUTPUT_MODE
-/* When using a fast MCU and single clock to drive multiple amp boards the use of a 
-exteranal pullup is needed hence the outptu should be defined as open drain. */
-#define SCK_MODE OUTPUT_OPEN_DRAIN
-#else
-#define SCK_MODE OUTPUT
-#endif
 
 #if ARCH_ESPRESSIF
 // ESP8266 doesn't read values between 0x20000 and 0x30000 when DOUT is pulled up.
@@ -89,18 +84,18 @@ HX711_2::~HX711_2()
 {
 }
 
-void HX711_2::begin(byte dout, byte dout2, byte pd_sck, byte pd_sck2, byte gain)
+void HX711_2::begin(byte dout, byte dout2, byte pd_sck, byte pd_sck2, byte gain, char sck_mode)
 {
   PD_SCK = pd_sck;
   PD_SCK2 = pd_sck2;
   DOUT = dout;
   DOUT2 = dout2;
-  pinMode(PD_SCK, SCK_MODE);
+
+  pinMode(PD_SCK, sck_mode);
   if (PD_SCK2 != 255)
-    pinMode(PD_SCK2, SCK_MODE);
+    pinMode(PD_SCK2, sck_mode);
   pinMode(DOUT, DOUT_MODE);
   pinMode(DOUT2, DOUT_MODE);
-
 
   set_gain(gain);
 }
@@ -192,11 +187,11 @@ void HX711_2::read(long *readValues, unsigned long timeout)
     {
       doubleWrite(PD_SCK, PD_SCK2, HIGH);
 #if FAST_CPU
-      delayMicroseconds(3);
+      delayMicroseconds(DELAY_MICROSECONDS);
 #endif
       doubleWrite(PD_SCK, PD_SCK2, LOW);
 #if FAST_CPU
-      delayMicroseconds(3);
+      delayMicroseconds(DELAY_MICROSECONDS);
 #endif
     }
 
@@ -353,7 +348,7 @@ void HX711_2::read(long *readValues, unsigned long timeout)
   {
     doubleWrite(PD_SCK, PD_SCK2, LOW);
 #if FAST_CPU
-    delayMicroseconds(3);
+    delayMicroseconds(DELAY_MICROSECONDS);
 #endif
     doubleWrite(PD_SCK, PD_SCK2, HIGH);
   }
