@@ -26,10 +26,10 @@
     ARCH_ESPRESSIF || \
     defined(ARDUINO_ARCH_SAM)     || defined(ARDUINO_ARCH_SAMD) || \
     defined(ARDUINO_ARCH_STM32)   || defined(TEENSYDUINO) || \
-	defined(ARDUINO_ARCH_RP2040) \
+    defined(ARDUINO_ARCH_RP2040) \
     )
 
-#define FAST_CPU_DELAY_MS 3
+#define FAST_CPU_DELAY_US 3
 
 #if HAS_ATOMIC_BLOCK
 // Acquire AVR-specific ATOMIC_BLOCK(ATOMIC_RESTORESTATE) macro.
@@ -43,9 +43,9 @@ uint16_t shiftInSlow(uint8_t dataPin, uint8_t dataPin2, uint8_t clockPin, uint8_
     
     for(i = 0; i < 8; ++i) {
         digitalWrite(clockPin, HIGH);
-        delayMicroseconds(FAST_CPU_DELAY_MS);
+        delayMicroseconds(FAST_CPU_DELAY_US);
         digitalWrite(clockPin, LOW);
-        delayMicroseconds(FAST_CPU_DELAY_MS);
+        delayMicroseconds(FAST_CPU_DELAY_US);
         if(bitOrder == LSBFIRST) {
             value |= digitalRead(dataPin) << i;
             value2 |= digitalRead(dataPin2) << i;
@@ -165,11 +165,11 @@ void HX711_2::read(long* readValues, unsigned long timeout) {
 	for (unsigned int i = 0; i < GAIN; i++) {
 		digitalWrite(PD_SCK, HIGH);
 		#if FAST_CPU
-		delayMicroseconds(FAST_CPU_DELAY_MS);
+		delayMicroseconds(FAST_CPU_DELAY_US);
 		#endif
 		digitalWrite(PD_SCK, LOW);
 		#if FAST_CPU
-		delayMicroseconds(FAST_CPU_DELAY_MS);
+		delayMicroseconds(FAST_CPU_DELAY_US);
 		#endif
 	}
 
@@ -309,7 +309,7 @@ void HX711_2::get_offset(long* offsetValues) {
 void HX711_2::power_down() {
 	digitalWrite(PD_SCK, LOW);
 #if FAST_CPU
-	delayMicroseconds(FAST_CPU_DELAY_MS);
+	delayMicroseconds(FAST_CPU_DELAY_US);
 #endif	
 	digitalWrite(PD_SCK, HIGH);
 }
