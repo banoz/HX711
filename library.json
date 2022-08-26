@@ -12,9 +12,10 @@
     "frameworks": "arduino",
     "platforms": [
         "atmelavr",
-        "espressif8266",
-        "espressif32",
         "atmelsam",
+        "espressif32",
+        "espressif8266",
+        "raspberrypi",
         "ststm32"
     ]
 }
