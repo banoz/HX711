@@ -24,7 +24,7 @@ HX711_2::HX711_2(TIM_TypeDef* timerInstance) {
 HX711_2::~HX711_2() {
 }
 
-void HX711_2::begin(uint32_t dout, uint32_t dout2, uint32_t pd_sck, uint8_t gain) {
+void HX711_2::begin(uint32_t dout, uint32_t dout2, uint32_t pd_sck, uint8_t gain, uint32_t sck_mode) {
   PD_SCK = pd_sck;
   DOUT = dout;
   DOUT2 = dout2;
@@ -33,7 +33,7 @@ void HX711_2::begin(uint32_t dout, uint32_t dout2, uint32_t pd_sck, uint8_t gain
   DOUT_PN = digitalPinToPinName(DOUT);
   DOUT2_PN = digitalPinToPinName(DOUT2);
 
-  pinMode(PD_SCK, OUTPUT);
+  pinMode(PD_SCK, sck_mode);
   pinMode(DOUT, INPUT);
   pinMode(DOUT2, INPUT);
 
