@@ -35,10 +35,12 @@ void HX711::begin(uint32_t dout, uint32_t pd_sck, uint8_t gain) {
   pinMode(DOUT, INPUT);
 
   set_gain(gain);
+
+  readStatus = 128u;
 }
 
 bool HX711::is_ready(void) {
-  return readStatus == 0u;
+  return readStatus & 32u;
 }
 
 void HX711::set_gain(uint8_t gain) {
@@ -145,25 +147,30 @@ long HX711::get_offset(void) {
 }
 
 void HX711::power_down() {
-  _hx711ReadTimer->pause();
-  readStatus = 0;
-  digitalWrite(PD_SCK, HIGH);
+  if (!(readStatus & 128u)) {
+    _hx711ReadTimer->pause();
+    readStatus = 128u;
+    digitalWriteFast(PD_SCK_PN, HIGH);
+  }
 }
 
 void HX711::power_up() {
-  digitalWrite(PD_SCK, LOW);
-  readStatus = 0;
-  _hx711ReadTimer->resume();
+  if (readStatus & 128u) {
+    digitalWriteFast(PD_SCK_PN, LOW);
+    readStatus = 0u;
+    _hx711ReadTimer->refresh();
+    _hx711ReadTimer->resume();
+  }
 }
 
 void HX711::processReadTimerInterrupt(void) {
-  if (readStatus == 0u) {
+  if (!(readStatus & 63u)) {
     if (digitalReadFast(DOUT_PN)) { // conversion not ready
       return;
     }
   }
 
-  uint8_t position = readStatus >> 1;
+  uint8_t position = (readStatus >> 1) & 31u;
 
   if (readStatus & 1u) {
     if (position < 24u) { // 24 data bits
@@ -203,9 +210,9 @@ void HX711::processReadTimerInterrupt(void) {
     }
   }
 
-  if (++readStatus > 63u) { // wrap around
+  if (++readStatus > 127u) { // wrap around
     digitalWriteFast(PD_SCK_PN, LOW);
-    readStatus = 0;
+    readStatus -= 64u;
   }
 }
 
