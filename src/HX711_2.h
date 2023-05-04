@@ -11,7 +11,7 @@
 
 #include <Arduino.h>
 
-class HX711
+class HX711_2
 {
 private:
   PinName PD_SCK_PN;
@@ -36,9 +36,9 @@ private:
 
 public:
 
-  HX711(TIM_TypeDef* timerInstance = TIM10);
+  HX711_2(TIM_TypeDef* timerInstance = TIM10);
 
-  virtual ~HX711();
+  virtual ~HX711_2();
 
   // Initialize library with data output pin, clock input pin and gain factor.
   // Channel selection is made by passing the appropriate gain:

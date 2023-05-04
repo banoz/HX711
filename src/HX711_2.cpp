@@ -11,9 +11,9 @@
 
 #include "HX711_2.h"
 
-HX711* _theHX711;
+HX711_2* _theHX711;
 
-HX711::HX711(TIM_TypeDef* timerInstance) {
+HX711_2::HX711_2(TIM_TypeDef* timerInstance) {
   _theHX711 = this;
 
   _hx711ReadTimer = new HardwareTimer(timerInstance);
@@ -21,10 +21,10 @@ HX711::HX711(TIM_TypeDef* timerInstance) {
   _hx711ReadTimer->attachInterrupt(_onHX711ReadTimerInterrupt);
 }
 
-HX711::~HX711() {
+HX711_2::~HX711_2() {
 }
 
-void HX711::begin(uint32_t dout, uint32_t dout2, uint32_t pd_sck, uint8_t gain) {
+void HX711_2::begin(uint32_t dout, uint32_t dout2, uint32_t pd_sck, uint8_t gain) {
   PD_SCK = pd_sck;
   DOUT = dout;
   DOUT2 = dout2;
@@ -42,11 +42,11 @@ void HX711::begin(uint32_t dout, uint32_t dout2, uint32_t pd_sck, uint8_t gain) 
   readStatus = 128u;
 }
 
-bool HX711::is_ready(void) {
+bool HX711_2::is_ready(void) {
   return readStatus & 32u;
 }
 
-void HX711::set_gain(uint8_t gain) {
+void HX711_2::set_gain(uint8_t gain) {
   switch (gain) {
   case 128u:		// channel A, gain factor 128
     GAIN = 1u;
@@ -60,7 +60,7 @@ void HX711::set_gain(uint8_t gain) {
   }
 }
 
-void HX711::read(long* readValues, unsigned long timeout) {
+void HX711_2::read(long* readValues, unsigned long timeout) {
 
   // Wait for the chip to become ready.
   if (!wait_ready_timeout(timeout)) {
@@ -71,7 +71,7 @@ void HX711::read(long* readValues, unsigned long timeout) {
   readValues[1] = static_cast<long>(readData[1]) - OFFSET2;
 }
 
-void HX711::wait_ready(unsigned long delay_ms) {
+void HX711_2::wait_ready(unsigned long delay_ms) {
   // Wait for the chip to become ready.
   // This is a blocking implementation and will
   // halt the sketch until a load cell is connected.
@@ -82,7 +82,7 @@ void HX711::wait_ready(unsigned long delay_ms) {
   }
 }
 
-bool HX711::wait_ready_retry(unsigned int retries, unsigned long delay_ms) {
+bool HX711_2::wait_ready_retry(unsigned int retries, unsigned long delay_ms) {
   // Wait for the chip to become ready by
   // retrying for a specified amount of attempts.
   // https://github.com/bogde/HX711/issues/76
@@ -97,7 +97,7 @@ bool HX711::wait_ready_retry(unsigned int retries, unsigned long delay_ms) {
   return false;
 }
 
-bool HX711::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms) {
+bool HX711_2::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms) {
   // Wait for the chip to become ready until timeout.
   // https://github.com/bogde/HX711/pull/96
   unsigned long stopAt = millis() + timeout;
@@ -110,7 +110,7 @@ bool HX711::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms) {
   return false;
 }
 
-void HX711::read_average(long* readValues, byte times) {
+void HX711_2::read_average(long* readValues, byte times) {
   long sum[2] = { 0 };
   for (byte i = 0; i < times; ++i) {
     long values[2];
@@ -122,11 +122,11 @@ void HX711::read_average(long* readValues, byte times) {
   readValues[1] = sum[1] / times;
 }
 
-void HX711::get_value(long* readValues, byte times) {
+void HX711_2::get_value(long* readValues, byte times) {
   read_average(readValues, times);
 }
 
-void HX711::get_units(float* readValues, byte times) {
+void HX711_2::get_units(float* readValues, byte times) {
   long values[2];
   read_average(values, times);
 
@@ -134,34 +134,34 @@ void HX711::get_units(float* readValues, byte times) {
   readValues[1] = values[1] / (SCALE2 == 0 ? 1 : SCALE2);
 }
 
-void HX711::tare(byte times) {
+void HX711_2::tare(byte times) {
   long readValues[2];
   set_offset(0, 0);
   read_average(readValues, times);
   set_offset(readValues[0], readValues[1]);
 }
 
-void HX711::set_scale(float scale, float scale2) {
+void HX711_2::set_scale(float scale, float scale2) {
   SCALE = scale;
   SCALE2 = scale2;
 }
 
-void HX711::get_scale(float* scaleValues) {
+void HX711_2::get_scale(float* scaleValues) {
   scaleValues[0] = SCALE;
   scaleValues[1] = SCALE2;
 }
 
-void HX711::set_offset(long offset, long offset2) {
+void HX711_2::set_offset(long offset, long offset2) {
   OFFSET = offset;
   OFFSET2 = offset2;
 }
 
-void HX711::get_offset(long* offsetValues) {
+void HX711_2::get_offset(long* offsetValues) {
   offsetValues[0] = OFFSET;
   offsetValues[1] = OFFSET2;
 }
 
-void HX711::power_down() {
+void HX711_2::power_down() {
   if (!(readStatus & 128u)) {
     _hx711ReadTimer->pause();
     readStatus = 128u;
@@ -169,7 +169,7 @@ void HX711::power_down() {
   }
 }
 
-void HX711::power_up() {
+void HX711_2::power_up() {
   if (readStatus & 128u) {
     digitalWriteFast(PD_SCK_PN, LOW);
     readStatus = 0u;
@@ -178,7 +178,7 @@ void HX711::power_up() {
   }
 }
 
-void HX711::processReadTimerInterrupt(void) {
+void HX711_2::processReadTimerInterrupt(void) {
   if (!(readStatus & 63u)) {
     if (digitalReadFast(DOUT_PN) || digitalReadFast(DOUT2_PN)) { // conversion not ready
       return;
@@ -242,6 +242,6 @@ void HX711::processReadTimerInterrupt(void) {
   }
 }
 
-void HX711::_onHX711ReadTimerInterrupt(void) {
+void HX711_2::_onHX711ReadTimerInterrupt(void) {
   _theHX711->processReadTimerInterrupt();
 }
