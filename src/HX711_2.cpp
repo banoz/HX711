@@ -210,7 +210,7 @@ void HX711_2::processReadTimerInterrupt(void) {
         else {
           readData[0] = readBuffer[0];
         }
-        if (readBuffer[1] & 0x800000 > 0) {
+        if (readBuffer[1] & 0x800000) {
           readData[1] = readBuffer[1] | 0xFF000000;
         }
         else {
