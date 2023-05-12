@@ -110,7 +110,7 @@ bool HX711_2::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms) 
   return false;
 }
 
-void HX711_2::read_average(long* readValues, byte times) {
+void HX711_2::read_average(long* readValues, const byte times) {
   long sum[2] = { 0 };
   for (byte i = 0; i < times; ++i) {
     long values[2];
@@ -118,25 +118,31 @@ void HX711_2::read_average(long* readValues, byte times) {
     sum[0] += values[0];
     sum[1] += values[1];
   }
-  readValues[0] = sum[0] / times;
-  readValues[1] = sum[1] / times;
+  if (times < 2) {
+    readValues[0] = sum[0];
+    readValues[1] = sum[1];
+  }
+  else {
+    readValues[0] = sum[0] / times;
+    readValues[1] = sum[1] / times;
+  }
 }
 
-void HX711_2::get_value(long* readValues, byte times) {
+void HX711_2::get_value(long* readValues, const byte times) {
   read_average(readValues, times);
 }
 
-void HX711_2::get_units(float* readValues, byte times) {
+void HX711_2::get_units(float* readValues, const byte times) {
   long values[2];
   read_average(values, times);
 
-  readValues[0] = values[0] / (SCALE == 0 ? 1 : SCALE);
-  readValues[1] = values[1] / (SCALE2 == 0 ? 1 : SCALE2);
+  readValues[0] = values[0] / (SCALE == 0.f ? 1.f : SCALE);
+  readValues[1] = values[1] / (SCALE2 == 0.f ? 1.f : SCALE2);
 }
 
-void HX711_2::tare(byte times) {
+void HX711_2::tare(const byte times) {
   long readValues[2];
-  set_offset(0, 0);
+  set_offset(0L, 0L);
   read_average(readValues, times);
   set_offset(readValues[0], readValues[1]);
 }

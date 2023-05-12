@@ -114,6 +114,9 @@ long HX711::read_average(const byte times) {
   for (byte i = 0; i < times; ++i) {
     sum += read();
   }
+  if (times < 2) {
+    return sum;
+  }
   return sum / times;
 }
 
@@ -122,11 +125,11 @@ long HX711::get_value(const byte times) {
 }
 
 float HX711::get_units(byte times) {
-  return read_average(times) / (SCALE == 0 ? 1 : SCALE);
+  return read_average(times) / (SCALE == 0.f ? 1.f : SCALE);
 }
 
-void HX711::tare(byte times) {
-  set_offset(0);
+void HX711::tare(const byte times) {
+  set_offset(0L);
   set_offset(read_average(times));
 }
 
