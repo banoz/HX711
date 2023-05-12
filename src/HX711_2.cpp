@@ -167,16 +167,20 @@ void HX711_2::get_offset(long* offsetValues) {
   offsetValues[1] = OFFSET2;
 }
 
+long HX711_2::get_readCounter() {
+  return (readStatus >> 6) & 0xFFFFFFUL;
+}
+
 void HX711_2::power_down() {
-  if (!(readStatus & 128u)) {
+  if (!(readStatus & 0x80000000UL)) {
     _hx711ReadTimer->pause();
-    readStatus = 128u;
+    readStatus = 0x80000000UL;
     digitalWriteFast(PD_SCK_PN, HIGH);
   }
 }
 
 void HX711_2::power_up() {
-  if (readStatus & 128u) {
+  if (readStatus & 0x80000000UL) {
     digitalWriteFast(PD_SCK_PN, LOW);
     readStatus = 0u;
     _hx711ReadTimer->refresh();
@@ -242,9 +246,9 @@ void HX711_2::processReadTimerInterrupt(void) {
     }
   }
 
-  if (++readStatus > 127u) { // wrap around
+  if (++readStatus > 0x3FFFFFFFUL) { // wrap around
     digitalWriteFast(PD_SCK_PN, LOW);
-    readStatus -= 64u;
+    readStatus -= 0x3FFFFFC0UL;
   }
 }
 

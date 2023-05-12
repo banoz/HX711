@@ -25,7 +25,7 @@ private:
   HardwareTimer* _hx711ReadTimer;
   volatile uint32_t readData;
   volatile uint32_t readBuffer;
-  volatile uint8_t readStatus;
+  volatile uint32_t readStatus;
 
   static inline void _onHX711ReadTimerInterrupt(void);
   void processReadTimerInterrupt(void);
@@ -86,6 +86,8 @@ public:
   // get the current OFFSET
   long get_offset();
 
+  // get current reads counter
+  long get_readCounter(void);
 
   // puts the chip into power down mode
   void power_down(void);
