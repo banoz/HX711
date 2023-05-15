@@ -24,23 +24,24 @@ HX711::HX711(TIM_TypeDef* timerInstance) {
 HX711::~HX711() {
 }
 
-void HX711::begin(uint32_t dout, uint32_t pd_sck, uint8_t gain) {
+void HX711::begin(uint32_t dout, uint32_t pd_sck, uint8_t gain, uint32_t sck_mode) {
   PD_SCK = pd_sck;
   DOUT = dout;
 
   PD_SCK_PN = digitalPinToPinName(PD_SCK);
   DOUT_PN = digitalPinToPinName(DOUT);
 
-  pinMode(PD_SCK, OUTPUT);
+  pinMode(PD_SCK, sck_mode);
   pinMode(DOUT, INPUT);
 
   set_gain(gain);
 
-  readStatus = 128u;
+  readStatus = 0x80000000UL;
+  lastReadCounter = 0UL;
 }
 
-bool HX711::is_ready(void) {
-  return readStatus & 32u;
+bool HX711::is_ready(unsigned long fromCounter) {
+  return readStatus < 0xC0000000UL && readStatus > 0x3FUL && fromCounter <= get_readCounter();
 }
 
 void HX711::set_gain(uint8_t gain) {
@@ -60,31 +61,33 @@ void HX711::set_gain(uint8_t gain) {
 long HX711::read(unsigned long timeout) {
 
   // Wait for the chip to become ready.
-  if (!wait_ready_timeout(timeout)) {
+  if (!wait_ready_timeout(timeout, 0UL, lastReadCounter + 1)) {
     return 0;
   }
+
+  lastReadCounter = get_readCounter();
 
   return static_cast<long>(readData) - OFFSET;
 }
 
-void HX711::wait_ready(unsigned long delay_ms) {
+void HX711::wait_ready(unsigned long delay_ms, unsigned long fromCounter) {
   // Wait for the chip to become ready.
   // This is a blocking implementation and will
   // halt the sketch until a load cell is connected.
-  while (!is_ready()) {
+  while (!is_ready(fromCounter)) {
     // Probably will do no harm on AVR but will feed the Watchdog Timer (WDT) on ESP.
     // https://github.com/bogde/HX711/issues/73
     delay(delay_ms);
   }
 }
 
-bool HX711::wait_ready_retry(unsigned int retries, unsigned long delay_ms) {
+bool HX711::wait_ready_retry(unsigned int retries, unsigned long delay_ms, unsigned long fromCounter) {
   // Wait for the chip to become ready by
   // retrying for a specified amount of attempts.
   // https://github.com/bogde/HX711/issues/76
   int count = 0;
   while (count < retries) {
-    if (is_ready()) {
+    if (is_ready(fromCounter)) {
       return true;
     }
     delay(delay_ms);
@@ -93,12 +96,12 @@ bool HX711::wait_ready_retry(unsigned int retries, unsigned long delay_ms) {
   return false;
 }
 
-bool HX711::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms) {
+bool HX711::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms, unsigned long fromCounter) {
   // Wait for the chip to become ready until timeout.
   // https://github.com/bogde/HX711/pull/96
   unsigned long stopAt = millis() + timeout;
   while (millis() < stopAt) {
-    if (is_ready()) {
+    if (is_ready(fromCounter)) {
       return true;
     }
     delay(delay_ms);
@@ -164,14 +167,15 @@ void HX711::power_down() {
 void HX711::power_up() {
   if (readStatus & 0x80000000UL) {
     digitalWriteFast(PD_SCK_PN, LOW);
-    readStatus = 0u;
+    readStatus = 0UL;
+    lastReadCounter = 0UL;
     _hx711ReadTimer->refresh();
     _hx711ReadTimer->resume();
   }
 }
 
 void HX711::processReadTimerInterrupt(void) {
-  if (!(readStatus & 63u)) {
+  if (!(readStatus & 0x3FUL)) {
     if (digitalReadFast(DOUT_PN)) { // conversion not ready
       return;
     }
