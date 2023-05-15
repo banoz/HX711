@@ -76,7 +76,7 @@ void HX711_2::read(long* readValues, unsigned long timeout) {
   readValues[1] = static_cast<long>(readData[1]) - OFFSET2;
 }
 
-void HX711_2::wait_ready(unsigned long delay_ms, unsigned long fromCounter = 0) {
+void HX711_2::wait_ready(unsigned long delay_ms, unsigned long fromCounter) {
   // Wait for the chip to become ready.
   // This is a blocking implementation and will
   // halt the sketch until a load cell is connected.
@@ -87,7 +87,7 @@ void HX711_2::wait_ready(unsigned long delay_ms, unsigned long fromCounter = 0) 
   }
 }
 
-bool HX711_2::wait_ready_retry(unsigned int retries, unsigned long delay_ms, unsigned long fromCounter = 0) {
+bool HX711_2::wait_ready_retry(unsigned int retries, unsigned long delay_ms, unsigned long fromCounter) {
   // Wait for the chip to become ready by
   // retrying for a specified amount of attempts.
   // https://github.com/bogde/HX711/issues/76
