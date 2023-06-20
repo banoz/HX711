@@ -40,7 +40,7 @@ private:
 
 public:
 
-  HX711_2(TIM_TypeDef* timerInstance = TIM10);
+  HX711_2(TIM_TypeDef* timerInstance = TIM1);
 
   virtual ~HX711_2();
 
