@@ -110,6 +110,9 @@ bool HX711::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms, un
 }
 
 long HX711::read_average(const byte times) {
+  if (times <= QUEUE_LENGTH && get_readCounter() >= QUEUE_LENGTH) {
+    return read_moving_average(times);
+  }
   if (times <= 1) {
     return read();
   }
@@ -121,6 +124,23 @@ long HX711::read_average(const byte times) {
     return sum;
   }
   return sum / times;
+}
+
+long HX711::read_moving_average(const byte length) {
+  long readValues = 0;
+  
+  byte readLength = min<byte>(length, QUEUE_LENGTH);
+
+  int8_t idx = lastMeasurementIdx - 1;
+
+  for (int i = 0; i < readLength; i++) {
+    if (idx < 0) {
+      idx += QUEUE_LENGTH;
+    }
+    readValues += lastMeasurements[idx];
+    idx--;
+  }
+  return readValues / readLength - OFFSET;
 }
 
 long HX711::get_value(const byte times) {
@@ -171,6 +191,9 @@ void HX711::power_up() {
     lastReadCounter = 0UL;
     _hx711ReadTimer->refresh();
     _hx711ReadTimer->resume();
+
+    memset(lastMeasurements, 0, sizeof(lastMeasurements));
+    lastMeasurementIdx = 0;
   }
 }
 
@@ -200,6 +223,13 @@ void HX711::processReadTimerInterrupt(void) {
         }
         else {
           readData = readBuffer;
+        }
+
+        lastMeasurements[lastMeasurementIdx] = static_cast<long>(readData);
+        lastMeasurementIdx++;
+
+        if (lastMeasurementIdx >= QUEUE_LENGTH) {
+          lastMeasurementIdx = 0u;
         }
       }
     }

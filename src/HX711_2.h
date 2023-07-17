@@ -11,6 +11,8 @@
 
 #include <Arduino.h>
 
+#define QUEUE_LENGTH 20
+
 class HX711_2
 {
 private:
@@ -26,9 +28,12 @@ private:
   float SCALE = 1.f;	// used to return weight in grams, kg, ounces, whatever
   float SCALE2 = 1.f;	// used to return weight in grams, kg, ounces, whatever
 
+  long lastMeasurements[QUEUE_LENGTH];
+  volatile uint8_t lastMeasurementIdx = 0u;
+
   HardwareTimer* _hx711ReadTimer;
-  volatile uint32_t readData[2];
-  volatile uint32_t readBuffer[2];
+  uint32_t readData[2];
+  uint32_t readBuffer[2];
   volatile uint32_t lastReadCounter;
   volatile uint32_t readStatus;
 
@@ -71,6 +76,9 @@ public:
 
   // returns an average reading; times = how many times to read
   void read_average(long* readValues, uint8_t times = 10u);
+
+  // returns a current moving average reading
+  void read_moving_average(long* readValues, const uint8_t length);
 
   // returns (read_average() - OFFSET), that is the current value without the tare weight; times = how many readings to do
   void get_value(long* readValues, uint8_t times = 1u);

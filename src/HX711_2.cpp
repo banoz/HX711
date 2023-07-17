@@ -116,6 +116,11 @@ bool HX711_2::wait_ready_timeout(unsigned long timeout, unsigned long delay_ms, 
 }
 
 void HX711_2::read_average(long* readValues, const byte times) {
+  if (times * 2 <= QUEUE_LENGTH && get_readCounter() * 2 >= QUEUE_LENGTH) {
+    read_moving_average(readValues, times);
+    return;
+  }
+
   long sum[2] = { 0 };
   for (byte i = 0; i < times; ++i) {
     long values[2];
@@ -131,6 +136,30 @@ void HX711_2::read_average(long* readValues, const byte times) {
     readValues[0] = sum[0] / times;
     readValues[1] = sum[1] / times;
   }
+}
+
+void HX711_2::read_moving_average(long* readValues, const byte length) {
+  readValues[0] = 0;
+  readValues[1] = 0;
+
+  byte readLength = min<byte>(length, QUEUE_LENGTH / 2);
+
+  int8_t idx = lastMeasurementIdx - 1;
+
+  for (int i = 0; i < readLength; i++) {
+    if (idx < 0) {
+      idx += QUEUE_LENGTH;
+    }
+    readValues[0] += lastMeasurements[idx];
+    idx--;
+    if (idx < 0) {
+      idx += QUEUE_LENGTH;
+}
+    readValues[1] += lastMeasurements[idx];
+    idx--;
+  }
+  readValues[0] = readValues[0] / readLength - OFFSET;
+  readValues[1] = readValues[1] / readLength - OFFSET2;
 }
 
 void HX711_2::get_value(long* readValues, const byte times) {
@@ -191,6 +220,9 @@ void HX711_2::power_up() {
     lastReadCounter = 0UL;
     _hx711ReadTimer->refresh();
     _hx711ReadTimer->resume();
+
+    memset(lastMeasurements, 0, sizeof(lastMeasurements));
+    lastMeasurementIdx = 0;
   }
 }
 
@@ -231,6 +263,16 @@ void HX711_2::processReadTimerInterrupt(void) {
         }
         else {
           readData[1] = readBuffer[1];
+        }
+
+        lastMeasurements[lastMeasurementIdx] = static_cast<long>(readData[0]);
+        lastMeasurementIdx++;
+
+        lastMeasurements[lastMeasurementIdx] = static_cast<long>(readData[1]);
+        lastMeasurementIdx++;
+
+        if (lastMeasurementIdx >= QUEUE_LENGTH) {
+          lastMeasurementIdx = 0u;
         }
       }
     }
