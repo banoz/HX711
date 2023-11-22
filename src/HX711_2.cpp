@@ -150,12 +150,12 @@ void HX711_2::read_moving_average(long* readValues, const byte length) {
     if (idx < 0) {
       idx += QUEUE_LENGTH;
     }
-    readValues[0] += lastMeasurements[idx];
+    readValues[1] += lastMeasurements[idx];
     idx--;
     if (idx < 0) {
       idx += QUEUE_LENGTH;
 }
-    readValues[1] += lastMeasurements[idx];
+    readValues[0] += lastMeasurements[idx];
     idx--;
   }
   readValues[0] = readValues[0] / readLength - OFFSET;
